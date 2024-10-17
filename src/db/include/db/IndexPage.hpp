@@ -11,7 +11,10 @@ struct IndexPageHeader {
   /// Whether the next level is internal or leaf
   bool index_children;
 };
-
+struct findIndexRet{
+  bool update;
+  size_t pos;
+};
 struct IndexPage {
   uint16_t capacity;
 
@@ -46,6 +49,7 @@ struct IndexPage {
    * @return the split key (this key is moved to the parent page)
    */
   int split(IndexPage &new_page);
+  findIndexRet findInsertPosition(int key) const;
 };
 
 } // namespace db

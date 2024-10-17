@@ -64,17 +64,12 @@ int LeafPage::split(LeafPage &new_page) {
   std::memcpy(new_page.data, data + half * td.length(),
               (header->size - half) * td.length());
 
-  // 更新新页面的元组数量
   new_page.header->size = header->size - half;
-
-  // 更新当前页面的元组数量
   header->size = half;
 
-  // 设置新页面的 next_leaf 指针
   new_page.header->next_leaf = header->next_leaf;
-  header->next_leaf = reinterpret_cast<size_t>(&new_page); // 设置新的叶子指针
+  header->next_leaf = reinterpret_cast<size_t>(&new_page);
 
-  // 返回拆分后的第一个键（新页面的第一个元组的键）
   db::Tuple first_tuple = new_page.td.deserialize(new_page.data);
   int ret=std::get<int>(first_tuple.get_field(key_index));
   return ret;
