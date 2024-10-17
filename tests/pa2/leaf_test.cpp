@@ -1,12 +1,13 @@
 #include <db/LeafPage.hpp>
 #include <gtest/gtest.h>
-
+#include <iostream>
 TEST(LeafTest, InsertFirst) {
   db::Page page{};
   db::TupleDesc td({db::type_t::INT, db::type_t::CHAR, db::type_t::DOUBLE}, {"id", "name", "price"});
   db::LeafPage leaf{page, td, 0};
   int capacity = leaf.capacity;
   EXPECT_EQ(capacity, 53);
+  //std::cout<<"line 10 =-capacity:"<<capacity<<std::endl;
   std::vector<int> ids;
   ids.push_back(0);
   for (int i = 1; i < capacity; i++) {

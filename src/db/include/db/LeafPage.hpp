@@ -11,7 +11,10 @@ struct LeafPageHeader {
   /// The number of tuples in the page
   uint16_t size;
 };
-
+struct findRet{
+  bool update;
+  size_t pos;
+};
 struct LeafPage {
   const TupleDesc &td;
 
@@ -57,6 +60,7 @@ struct LeafPage {
    * @return The tuple read from the page.
    */
   Tuple getTuple(size_t slot) const;
+  findRet findInsertPosition(const db::Tuple& t) const;
 };
 
 } // namespace db
