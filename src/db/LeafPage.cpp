@@ -10,7 +10,7 @@ LeafPage::LeafPage(Page &page, const TupleDesc &td, size_t key_index) : td(td), 
   header->size=0;
   //size of header:8
   data = page.data() + DEFAULT_PAGE_SIZE - td.length() * capacity;
-  std::cout<<"constructed:"<<capacity<<std::endl;
+  // std::cout<<"constructed:"<<capacity<<std::endl;
 }
 
 findRet LeafPage::findInsertPosition(const db::Tuple& t) const {
@@ -39,7 +39,7 @@ bool LeafPage::insertTuple(const Tuple &t) {
   //uto id=t.get_field(0);
   findRet r=findInsertPosition(t);
   size_t insert_pos = r.pos;
-  std::cout<<"insert_pos "<<insert_pos<<std::endl;
+  //std::cout<<"insert_pos "<<insert_pos<<std::endl;
   if(r.update){
     td.serialize(data + insert_pos * td.length(), t);
   }
@@ -50,7 +50,7 @@ bool LeafPage::insertTuple(const Tuple &t) {
     td.serialize(data + insert_pos * td.length(), t);
     header->size+=1;
   }
-  std::cout<<"function insert end"<<std::endl;
+  //std::cout<<"function insert end"<<std::endl;
   if(header->size<capacity)
     return false;
   else
