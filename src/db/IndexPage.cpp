@@ -41,7 +41,7 @@ bool IndexPage::insert(int key, size_t child) {
   auto r=findInsertPosition(key);
   size_t pos=r.pos;
   if (r.update==true) {
-    children[pos + 1] = child;
+    children[pos] = child;
     return false;
   }
 
@@ -50,6 +50,7 @@ bool IndexPage::insert(int key, size_t child) {
   std::memmove(children + pos + 1, children + pos ,
                (header->size - pos) * sizeof(size_t));
   //std::cout<<"after memmove"<<std::endl;
+  std::cout<<"IndexPos is"<<pos<<std::endl;
   keys[pos] = key;
   children[pos] = child;
 
