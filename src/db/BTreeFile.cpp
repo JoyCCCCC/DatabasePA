@@ -31,7 +31,7 @@ void BTreeFile::insertTuple(const Tuple &t) {
     leaf.insertTuple(t);
 
     // Update the root node information to point to the leaf node
-    indexPage.header->index_children = false;  // The root node directly points to the leaf node
+    indexPage.header->index_children = true;  // The root node directly points to the leaf node
     indexPage.children[0] = newLeafPageNo;     // The first child node is a leaf node
     indexPage.header->size = 1;  // The root node now has one child node
 
