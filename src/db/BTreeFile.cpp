@@ -18,7 +18,7 @@ void BTreeFile::insertTuple(const Tuple &t) {
   Page &root = getDatabase().getBufferPool().getPage({name, currentPageNo});
 
   // Stack to keep track of parent pages during traversal
-  std::stack<size_t> parentPages;
+  static std::stack<size_t> parentPages;
 
   // If the root node is empty, it means this is the first time the tuple is inserted.
   IndexPage indexPage(root);
@@ -36,6 +36,7 @@ void BTreeFile::insertTuple(const Tuple &t) {
     indexPage.children[0] = newLeafPageNo;     // The first child node is a leaf node
     indexPage.header->size = 0;  // The root node now has one child node
 //    indexPage.insert(0x7fffffff,newLeafPageNo);
+    parentPages.push(currentPageNo);
 
     // Mark root and leaf pages as dirty
     getDatabase().getBufferPool().markDirty({name, currentPageNo});
@@ -112,6 +113,7 @@ void BTreeFile::insertTuple(const Tuple &t) {
         IndexPage parentIndexPage(parentPage);
 
         // Insert the split key into the parent index page
+        parentIndexPage.insert(splitKey,currentPageNo);
         bool needsParentSplit = parentIndexPage.insert(splitKey, newLeafPageNo);
 
         // Mark the parent page as dirty
