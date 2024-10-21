@@ -22,7 +22,7 @@ void BTreeFile::insertTuple(const Tuple &t) {
 
   // If the root node is empty, it means this is the first time the tuple is inserted.
   IndexPage indexPage(root);
-  if (indexPage.header->size == 0) {
+  if (indexPage.header->size == 0 && indexPage.children[0] == 0) {
     // create a first leaf node
     size_t newLeafPageNo = 1;  // Assign a new leaf page number (assuming it starts at 1)
     Page &leafPage = getDatabase().getBufferPool().getPage({name, newLeafPageNo});
@@ -34,7 +34,7 @@ void BTreeFile::insertTuple(const Tuple &t) {
     // Update the root node information to point to the leaf node
     indexPage.header->index_children = false;  // The root node directly points to the leaf node
     indexPage.children[0] = newLeafPageNo;     // The first child node is a leaf node
-    indexPage.header->size = 1;  // The root node now has one child node
+    indexPage.header->size = 0;  // The root node now has one child node
 //    indexPage.insert(0x7fffffff,newLeafPageNo);
 
     // Mark root and leaf pages as dirty
@@ -61,6 +61,16 @@ void BTreeFile::insertTuple(const Tuple &t) {
     }
   }
 
+  // have only 1 child (root)
+  if(indexPage.header->size == 0){
+    currentPage = &getDatabase().getBufferPool().getPage({name, indexPage.children[0]});
+    currentPageNo = indexPage.children[0];  // Update the current page number to the child
+  } else {
+    size_t index = indexPage.findInsertPosition(std::get<int>(t.get_field(key_index))).pos;
+    size_t childPageNo = indexPage.children[index];
+    currentPage = &getDatabase().getBufferPool().getPage({name, childPageNo});
+    currentPageNo = childPageNo;  // Update the current page number to the child
+  }
   // We are now at the leaf page, so we insert the tuple
   LeafPage leafPage(*currentPage, td, key_index);
   bool needsSplit = leafPage.insertTuple(t);
@@ -185,10 +195,10 @@ Iterator BTreeFile::begin() const {
 
   // Check if the root page contains any valid tuples (i.e., tree is not empty)
   IndexPage indexPage(root);
-  std::cout << "Root page has " << indexPage.header->size << " children" << std::endl;
+  std::cout << "Root page has " << indexPage.header->size + 1 << " children" << std::endl;
 
   // If there are no children or no keys in the root, the tree is empty
-  if (indexPage.header->size == 0) {
+  if (indexPage.header->size == 0 && indexPage.children[0] == 0) {
     // Tree is empty, return end() iterator
     return end();
     std::cout << "Tree is empty, returning end()" << std::endl;
@@ -205,6 +215,7 @@ Iterator BTreeFile::begin() const {
     currentPage = &getDatabase().getBufferPool().getPage({name, currentPageNo});
     indexPage = IndexPage(*currentPage);
   }
+  currentPageNo = indexPage.children[0];
 
   std::cout << "Found first leaf page: " << currentPageNo << std::endl;
   // Return an iterator pointing to the first tuple in the leftmost leaf page
