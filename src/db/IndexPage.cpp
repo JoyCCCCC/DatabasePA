@@ -12,6 +12,7 @@ IndexPage::IndexPage(Page &page) {
   capacity = (DEFAULT_PAGE_SIZE - sizeof(IndexPageHeader)-sizeof(size_t)) /
              (sizeof(int) + sizeof(size_t)); //in fact, I don;t know whether it's right..
   children = reinterpret_cast<size_t*>(keys + capacity);
+  header->index_children=false;
 //  std::cout<<reinterpret_cast<uintptr_t>(children) -
 //                   reinterpret_cast<uintptr_t>(keys) <<std::endl;
 //
@@ -50,7 +51,7 @@ bool IndexPage::insert(int key, size_t child) {
   std::memmove(children + pos + 1, children + pos ,
                (header->size - pos) * sizeof(size_t));
   //std::cout<<"after memmove"<<std::endl;
-  std::cout<<"IndexPos is"<<pos<<std::endl;
+ // std::cout<<"IndexPos is"<<pos<<std::endl;
   keys[pos] = key;
   children[pos] = child;
 
@@ -75,5 +76,6 @@ int IndexPage::split(IndexPage &new_page) {
 
   new_page.header->size = header->size - half - 1;
   header->size = half;
+  new_page.header->index_children=header->index_children;
   return keys[half];
 }
