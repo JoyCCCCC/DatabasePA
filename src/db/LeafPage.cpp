@@ -39,7 +39,7 @@ bool LeafPage::insertTuple(const Tuple &t) {
   //uto id=t.get_field(0);
   findRet r=findInsertPosition(t);
   size_t insert_pos = r.pos;
-  //std::cout<<"insert_pos "<<insert_pos<<std::endl;
+  std::cout<<"insert_pos "<<insert_pos<<std::endl;
   if(r.update){
     td.serialize(data + insert_pos * td.length(), t);
   }
