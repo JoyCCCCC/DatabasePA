@@ -4,6 +4,7 @@
 #include <db/IndexPage.hpp>
 #include <db/LeafPage.hpp>
 #include <iostream>
+#include <stack>
 #include <stdexcept>
 
 using namespace db;
@@ -12,16 +13,16 @@ BTreeFile::BTreeFile(const std::string &name, const TupleDesc &td, size_t key_in
     : DbFile(name, td), key_index(key_index) {}
 
 void BTreeFile::insertTuple(const Tuple &t) {
-  std::cout << "Inserting tuple: " << std::get<int>(t.get_field(0)) << std::endl;
   // Initialize the root page number (always 0) and fetch the root page
   size_t currentPageNo = 0;
   Page &root = getDatabase().getBufferPool().getPage({name, currentPageNo});
 
+  // Stack to keep track of parent pages during traversal
+  std::stack<size_t> parentPages;
+
   // If the root node is empty, it means this is the first time the tuple is inserted.
   IndexPage indexPage(root);
   if (indexPage.header->size == 0) {
-    std::cout << "Root is empty, initializing root with first leaf" << std::endl;
-
     // create a first leaf node
     size_t newLeafPageNo = 1;  // Assign a new leaf page number (assuming it starts at 1)
     Page &leafPage = getDatabase().getBufferPool().getPage({name, newLeafPageNo});
@@ -31,27 +32,28 @@ void BTreeFile::insertTuple(const Tuple &t) {
     leaf.insertTuple(t);
 
     // Update the root node information to point to the leaf node
-    indexPage.header->index_children = true;  // The root node directly points to the leaf node
+    indexPage.header->index_children = false;  // The root node directly points to the leaf node
     indexPage.children[0] = newLeafPageNo;     // The first child node is a leaf node
     indexPage.header->size = 1;  // The root node now has one child node
+//    indexPage.insert(0x7fffffff,newLeafPageNo);
 
     // Mark root and leaf pages as dirty
     getDatabase().getBufferPool().markDirty({name, currentPageNo});
     getDatabase().getBufferPool().markDirty({name, newLeafPageNo});
-
-    std::cout << "Inserted first tuple into the first leaf at page " << newLeafPageNo << std::endl;
     return;
   }
 
   // Traverse the B-tree to find the correct leaf page for insertion
   Page *currentPage = &root;
-
   while (true) {
     IndexPage indexPage(*currentPage);
 
     // If it's an index page, traverse down to the correct child
     if (indexPage.header->index_children) {
-      size_t childPageNo = indexPage.findInsertPosition(std::get<int>(t.get_field(key_index))).pos;
+      // Before moving to the child, push the current page number (parent) onto the stack
+      parentPages.push(currentPageNo);
+      size_t index = indexPage.findInsertPosition(std::get<int>(t.get_field(key_index))).pos;
+      size_t childPageNo = indexPage.children[index];
       currentPage = &getDatabase().getBufferPool().getPage({name, childPageNo});
       currentPageNo = childPageNo;  // Update the current page number to the child
     } else {
@@ -67,9 +69,6 @@ void BTreeFile::insertTuple(const Tuple &t) {
     // If the leaf page is full, we need to split it
     // Use the next sequential page number for the new leaf page
     size_t newLeafPageNo = currentPageNo + 1;
-    while (!getDatabase().getBufferPool().contains({name, newLeafPageNo})) {
-      newLeafPageNo++;  // Make sure we don't overwrite existing pages
-    }
 
     // Create a new leaf page
     Page &newLeafPage = getDatabase().getBufferPool().getPage({name, newLeafPageNo});
@@ -81,12 +80,9 @@ void BTreeFile::insertTuple(const Tuple &t) {
     while(true) {
       // We now need to propagate this split key to the parent index page
       // If the current page is the root (page 0), we must create a new root
-      if (currentPageNo == 0) {
+      if (parentPages.empty()) {
         // Create a new root page with the next sequential page number
         size_t newRootPageNo = newLeafPageNo + 1;
-        while (!getDatabase().getBufferPool().contains({name, newLeafPageNo})) {
-          newLeafPageNo++;  // Make sure we don't overwrite existing pages
-        }
 
         Page &newRootPage = getDatabase().getBufferPool().getPage({name, newRootPageNo});
         IndexPage newRootIndexPage(newRootPage);
@@ -99,8 +95,10 @@ void BTreeFile::insertTuple(const Tuple &t) {
         getDatabase().getBufferPool().markDirty({name, newRootPageNo});
         break;
       } else {
-        // Insert the split key into the parent index page
-        Page &parentPage = getDatabase().getBufferPool().getPage({name, currentPageNo});
+        // Get the parent page from the stack (pop the stack)
+        size_t parentPageNo = parentPages.top();
+        parentPages.pop();
+        Page &parentPage = getDatabase().getBufferPool().getPage({name, parentPageNo});
         IndexPage parentIndexPage(parentPage);
 
         // Insert the split key into the parent index page
@@ -117,9 +115,6 @@ void BTreeFile::insertTuple(const Tuple &t) {
 
         // If the parent needs to split, continue the loop
         size_t newParentPageNo = currentPageNo + 1;
-        while (!getDatabase().getBufferPool().contains({name, newLeafPageNo})) {
-          newLeafPageNo++;  // Make sure we don't overwrite existing pages
-        }
         Page &newParentPage = getDatabase().getBufferPool().getPage({name, newParentPageNo});
         IndexPage newParentIndexPage(newParentPage);
 
