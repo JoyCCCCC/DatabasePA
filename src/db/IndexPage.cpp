@@ -42,13 +42,9 @@ bool IndexPage::insert(int key, size_t child) {
   //std::cout<<pos<<std::endl;
   auto r=findInsertPosition(key);
   size_t pos=r.pos+1;
-  if (r.pos==-1) {// insert the leftest leaf
-    std::memmove(keys + pos + 1, keys + pos,
-                 (header->size - pos) * sizeof(int));
-    std::memmove(children + pos + 1 , children + pos ,
-                 (header->size - pos) * sizeof(size_t));
+  if (r.pos==header->size) {// append at the rightest pos
     keys[pos] = key;
-    children[pos] = child;
+    children[pos+1] = child;
     header->size+=1;
     return header->size == capacity;
   }
