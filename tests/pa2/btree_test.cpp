@@ -17,7 +17,7 @@ TEST(BTreeTest, Sorted) {
   db::TupleDesc td({db::type_t::INT, db::type_t::CHAR, db::type_t::DOUBLE}, {"id", "name", "price"});
   db::getDatabase().add(std::make_unique<db::BTreeFile>(name, td, 0));
   auto &file = db::getDatabase().get(name);
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 54; i++) {
     db::Tuple t{{i, "apple", 1.0}};
     file.insertTuple(t);
   }
@@ -28,7 +28,7 @@ TEST(BTreeTest, Sorted) {
     //EXPECT_EQ(std::get<std::string>(t.get_field(1)), "apple");
     //EXPECT_EQ(std::get<double>(t.get_field(2)), 1.0);
     i++;
-    if(i==4)
+    if(i==54)
       break;
   }
   EXPECT_EQ(i, 1000000);
@@ -40,7 +40,7 @@ TEST(BTreeTest, Random) {
   db::TupleDesc td({db::type_t::INT, db::type_t::CHAR, db::type_t::DOUBLE}, {"id", "name", "price"});
   db::getDatabase().add(std::make_unique<db::BTreeFile>(name, td, 0));
   auto &file = db::getDatabase().get(name);
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 54; i++) {
     int k = i % 2 ? 1000000 - i : i;
     db::Tuple t{{k, "apple", 1.0}};
     file.insertTuple(t);
