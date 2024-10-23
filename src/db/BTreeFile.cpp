@@ -43,7 +43,7 @@ void BTreeFile::insertTuple(const Tuple &t) {
     getDatabase().getBufferPool().markDirty({name, newLeafPageNo});
     return;
   }
-
+  parentPages.push(currentPageNo);
   // Traverse the B-tree to find the correct leaf page for insertion
   Page *currentPage = &root;
   bool flag = true;

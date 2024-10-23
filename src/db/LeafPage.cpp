@@ -7,7 +7,8 @@ LeafPage::LeafPage(Page &page, const TupleDesc &td, size_t key_index) : td(td), 
   // TODO pa2: implement
   capacity =  (DEFAULT_PAGE_SIZE - sizeof(LeafPageHeader)) / td.length();
   header = reinterpret_cast<db::LeafPageHeader*>(page.data());
-  header->size=0;
+  if(data==NULL)
+    header->size=0;
   //size of header:8
   data = page.data() + DEFAULT_PAGE_SIZE - td.length() * capacity;
   // std::cout<<"constructed:"<<capacity<<std::endl;
@@ -32,21 +33,20 @@ findRet LeafPage::findInsertPosition(const db::Tuple& t) const {
   }
   return {false,left};
 }
-
 bool LeafPage::insertTuple(const Tuple &t) {
   // TODO pa2: implement
 
   //uto id=t.get_field(0);
   findRet r=findInsertPosition(t);
   size_t insert_pos = r.pos;
-  //std::cout<<"insert_pos "<<insert_pos<<std::endl;
+  std::cout<<"insert_pos "<<insert_pos<<std::endl;
   if(r.update){
     td.serialize(data + insert_pos * td.length(), t);
   }
   else{
     std::memmove(data + (insert_pos + 1) * td.length(),
-               data + insert_pos * td.length(),
-               (header->size - insert_pos) * td.length());
+                 data + insert_pos * td.length(),
+                 (header->size - insert_pos) * td.length());
     td.serialize(data + insert_pos * td.length(), t);
     header->size+=1;
   }
