@@ -6,21 +6,21 @@
 
 ### 1. LeafPage
 - constructor:
-    compute the capacity: (DEFAULT_PAGE_SIZE - sizeof(LeafPageHeader)) / td.length();
+    - compute the capacity: (DEFAULT_PAGE_SIZE - sizeof(LeafPageHeader)) / td.length();
     //the leafpage stores header and tuples.
-    initialize pointers of head and data;
+    - initialize pointers of head and data;
 - insertTuple:
-    I write a helper function called findInsertPosition, it returns {bool:update, size_t:pos}.
+    - I write a helper function called findInsertPosition, it returns {bool:update, size_t:pos}.
     In that function, I use 2-divide algorithm to find the position to insert.
     If the key alreadys exists, the function returns {true, pos} in condition of (MID==KEY) during that algorithm. Otherwise, it returns {false, pos}. We then can simply update it, or move the data behind this pos, and insert it.
 - split:
-    caculate new sizes for both pages, and copy half of the data to the new page.
-    use td.deserialize to get the first key and update it for new page.
+    - caculate new sizes for both pages, and copy half of the data to the new page.
+    - use td.deserialize to get the first key and update it for new page.
 
 ### 2. IndexPage
 - constructor:
-    it stores header, keys, and children. Since the num of children is size+1, the capacity is: (Page_size - Header_Size -Child_Size)/(key_size+child_size)
-    caculate capacity before initialize children* since we need it to calculate how far it is from keys*.
+    - it stores header, keys, and children. Since the num of children is size+1, the capacity is: (Page_size - Header_Size -Child_Size)/(key_size+child_size)
+    - caculate capacity before initialize children* since we need it to calculate how far it is from keys*.
 - insert:
     Just like what I do in LeafPage.cpp, I also write a similar helper function to find whether it is an updatition and where is the insert position.
     Then, update or copy and insert.
