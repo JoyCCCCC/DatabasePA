@@ -12,7 +12,7 @@ IndexPage::IndexPage(Page &page) {
   keys = reinterpret_cast<int*>(page.data() + sizeof(IndexPageHeader));
   capacity = (DEFAULT_PAGE_SIZE - sizeof(IndexPageHeader)-sizeof(size_t)) /
              (sizeof(int) + sizeof(size_t)); //in fact, I don;t know whether it's right..
-//  capacity = 3;
+  capacity = 3;
   children = reinterpret_cast<size_t*>(keys + capacity);
   header->index_children=false;
 //  std::cout<<reinterpret_cast<uintptr_t>(children) -

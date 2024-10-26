@@ -1,11 +1,13 @@
 #include <db/LeafPage.hpp>
 #include <stdexcept>
 #include <iostream>
+#include <cstring>
 using namespace db;
 
 LeafPage::LeafPage(Page &page, const TupleDesc &td, size_t key_index) : td(td), key_index(key_index) {
   // TODO pa2: implement
   capacity =  (DEFAULT_PAGE_SIZE - sizeof(LeafPageHeader)) / td.length();
+  capacity = 3;
   header = reinterpret_cast<db::LeafPageHeader*>(page.data());
   if(data==NULL)
     header->size=0;
@@ -33,13 +35,14 @@ findRet LeafPage::findInsertPosition(const db::Tuple& t) const {
   }
   return {false,left};
 }
+
 bool LeafPage::insertTuple(const Tuple &t) {
   // TODO pa2: implement
 
   //uto id=t.get_field(0);
   findRet r=findInsertPosition(t);
   size_t insert_pos = r.pos;
-  std::cout<<"insert_pos "<<insert_pos<<std::endl;
+  //std::cout<<"insert_pos "<<insert_pos<<std::endl;
   if(r.update){
     td.serialize(data + insert_pos * td.length(), t);
   }

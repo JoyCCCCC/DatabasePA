@@ -13,7 +13,7 @@ BTreeFile::BTreeFile(const std::string &name, const TupleDesc &td, size_t key_in
     : DbFile(name, td), key_index(key_index) {}
 
 void BTreeFile::insertTuple(const Tuple &t) {
-  // Initialize the root page number (always 0) and fetch the root page
+  // Initialize the root page number and fetch the root page
   Page &root = getDatabase().getBufferPool().getPage({name, root_id});
   IndexPage rootPage(root);
 
