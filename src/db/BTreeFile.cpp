@@ -50,39 +50,31 @@ void BTreeFile::insertTuple(const Tuple &t) {
   // Traverse the B-tree to find the correct leaf page for insertion
   Page *currentPage = &getDatabase().getBufferPool().getPage({name, currentPageNo});
   IndexPage indexPage(*currentPage);
+  if(currentPageNo != 1){
+    indexPage.header->index_children = true;
+  }
   bool flag = true;
   int currentKey = std::get<int>(t.get_field(key_index));  // Get the key from the tuple
   bool found = false;
-  while (true) {
-    // If it's an index page, traverse down to the correct child
-    if (indexPage.header->index_children) {
-      // Before moving to the child, push the current page number (parent) onto the stack
-      parentPages.push(currentPageNo);
-
-      // Find the correct child page by comparing the key values
-      size_t childPageNo;
-
-      // Traverse the keys to find the correct child to follow
-      for (size_t i = 0; i < indexPage.header->size; i++) {
-        if (currentKey < indexPage.keys[i]) {
-          // The key is bigger than the current key, go to the left child
-          childPageNo = indexPage.children[i];
-          found = true;
-          break;
-        }
+  while (indexPage.header->index_children) {
+    // Traverse the keys to find the correct child to follow
+    for (size_t i = 0; i < indexPage.header->size; i++) {
+      if (currentKey < indexPage.keys[i]) {
+        // The key is bigger than the current key, go to the left child
+        currentPageNo = indexPage.children[i];
+        found = true;
+        break;
       }
-
-      if (!found) {
-        // If we haven't found a bigger key, go to the rightmost child
-        childPageNo = indexPage.children[indexPage.header->size];
-      }
-      currentPage = &getDatabase().getBufferPool().getPage({name, childPageNo});
-      currentPageNo = childPageNo;  // Update the current page number to the child
-      flag = false;
-      IndexPage indexPage(*currentPage);
-    } else {
-      break; // We've found the leaf page
     }
+
+    if (!found) {
+      // If we haven't found a bigger key, go to the rightmost child
+      currentPageNo = indexPage.children[indexPage.header->size];
+    }
+    currentPage = &getDatabase().getBufferPool().getPage({name, currentPageNo});
+    flag = false;
+    parentPages.push(currentPageNo);
+    IndexPage indexPage(*currentPage);
   }
   if (flag) {
     if(indexPage.header->size == 0) {
