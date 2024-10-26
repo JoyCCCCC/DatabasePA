@@ -1,6 +1,7 @@
 #include <db/IndexPage.hpp>
 #include <stdexcept>
 #include <iostream>
+#include <cstring>
 using namespace db;
 
 IndexPage::IndexPage(Page &page) {
@@ -11,6 +12,7 @@ IndexPage::IndexPage(Page &page) {
   keys = reinterpret_cast<int*>(page.data() + sizeof(IndexPageHeader));
   capacity = (DEFAULT_PAGE_SIZE - sizeof(IndexPageHeader)-sizeof(size_t)) /
              (sizeof(int) + sizeof(size_t)); //in fact, I don;t know whether it's right..
+//  capacity = 3;
   children = reinterpret_cast<size_t*>(keys + capacity);
   header->index_children=false;
 //  std::cout<<reinterpret_cast<uintptr_t>(children) -
@@ -33,7 +35,7 @@ findIndexRet IndexPage::findInsertPosition(int key) const{
       right = mid;       // Search in the left half
     }
   }
-  return {false, pos};
+  return {false, pos+1};
 }
 bool IndexPage::insert(int key, size_t child) {
   // TODO pa2: implement
@@ -41,7 +43,7 @@ bool IndexPage::insert(int key, size_t child) {
   //size_t pos = std::lower_bound(keys, keys + header->size, key) - keys;
   //std::cout<<pos<<std::endl;
   auto r=findInsertPosition(key);
-  size_t pos=r.pos+1;
+  size_t pos=r.pos;
   if (r.pos==header->size) {// append at the rightest pos
     keys[pos] = key;
     children[pos+1] = child;
@@ -54,7 +56,6 @@ bool IndexPage::insert(int key, size_t child) {
   std::memmove(children + pos + 2 , children + pos +1,
                (header->size - pos) * sizeof(size_t));
   //std::cout<<"after memmove"<<std::endl;
- // std::cout<<"IndexPos is"<<pos<<std::endl;
   keys[pos] = key;
   children[pos+1] = child;
 
